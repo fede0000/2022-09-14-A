@@ -6,6 +6,9 @@ package it.polito.tdp.itunes;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Set;
+
+import it.polito.tdp.itunes.model.Album;
 import it.polito.tdp.itunes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -34,7 +37,7 @@ public class FXMLController {
     private Button btnSet; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbA1"
-    private ComboBox<?> cmbA1; // Value injected by FXMLLoader
+    private ComboBox<Album> cmbA1; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtDurata"
     private TextField txtDurata; // Value injected by FXMLLoader
@@ -48,10 +51,44 @@ public class FXMLController {
     @FXML
     void doComponente(ActionEvent event) {
     	
+    	txtResult.clear();
+    	Album a = cmbA1.getValue();
+    	if(a==null) {
+    		this.txtResult.setText("Selezionare un album");
+    	}
+    	Set<Album> connessi = model.analizzaComponente(a);
+    	
+    	double durata = 0;
+    	
+    	for(Album a1 : connessi) {
+    		durata += a1.getDurata();
+    	}
+    	this.txtResult.clear();
+    	this.txtResult.setText("Gli album connessi sono: "+ connessi.size()+ "\n con durata totale: "+ durata);
+    	
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	
+
+    	String input = txtDurata.getText();
+    	if(input == "") {
+    		txtResult.setText("Album mancante");
+    	}
+    	
+    	try {
+    		double inputNum = Double.parseDouble(input);
+    		model.creaGrafo(inputNum);
+    		String stringa= "I vertici sono: " + model.getNVertici()+ "\nGli archi sono: "+ model.getNArchi();
+    		txtResult.setText(stringa);
+    		
+    		cmbA1.getItems().clear();
+    		cmbA1.getItems().setAll(model.getVertices());
+    		
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("Errore");
+    	}
     	
     }
 
@@ -74,6 +111,7 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	
     }
 
 }

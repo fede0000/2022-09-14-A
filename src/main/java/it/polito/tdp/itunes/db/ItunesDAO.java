@@ -14,6 +14,7 @@ import it.polito.tdp.itunes.model.Genre;
 import it.polito.tdp.itunes.model.MediaType;
 import it.polito.tdp.itunes.model.Playlist;
 import it.polito.tdp.itunes.model.Track;
+import javafx.util.Pair;
 
 public class ItunesDAO {
 	
@@ -131,6 +132,55 @@ public class ItunesDAO {
 
 			while (res.next()) {
 				result.add(new MediaType(res.getInt("MediaTypeId"), res.getString("Name")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+	
+	public List<Album> getVertici(double durata){
+		 String sql = "select a.*, SUM(t.`Milliseconds`) AS durata "
+				+ "from album a, track t "
+				+ "where a.`AlbumId`= t.`AlbumId` "
+				+ "group by a.`AlbumId` "
+				+ "having durata>= ?"
+				+ "";
+		List<Album> result = new LinkedList<>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setDouble(1, durata*60*1000);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Album(res.getInt("AlbumId"), res.getString("Title"), res.getDouble("durata")/60/1000));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+	
+	public List<Pair<Integer,Integer>> getArchi(){
+		 String sql = "select distinctrow a1.`AlbumId` as id1, a2.`AlbumId` as id2 "
+		 		+ "from album a1, track t1, album a2, track t2, playlisttrack pt1, playlisttrack pt2 "
+		 		+ "where a1.`AlbumId`= t1.`AlbumId` and a2.`AlbumId`= t2.`AlbumId`  "
+		 		+ "and pt1.`TrackId`= t1.`TrackId` and pt2.`TrackId`= t2.`TrackId` and pt1.PlaylistId=pt2.PlaylistId";
+		List<Pair<Integer, Integer>> result = new LinkedList<>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Pair<Integer, Integer>(res.getInt("id1"), res.getInt("id2")));
 			}
 			conn.close();
 		} catch (SQLException e) {
